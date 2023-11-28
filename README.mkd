@@ -1,0 +1,62 @@
+
+# COM3505 Lab Assessment 2
+
+Code resides in the directory smart_watch in the file `ProjectThing.ino`
+
+## Design
+There are two functionalities for this project: reminding the user to water their plants every week on the same day and time (Wednesdays, 9pm in this case), and displaying a random selection from five different meme pictures on a random time during the day (kind of like BeReal if you know what that is) with the message "It'S mEmE OClOcK" on the screen (because why not).
+
+Besides these two functionalities, the watch has a main screen where the time is shown on the top right corner in front of a wallpaper. The design of the program also allows the user to turn off the watch screen when they are not using it. It also puts the watch to sleep if the watch has been inactive for a minute. The watch can be turned on by simply touching anywhere in the touch screen. 
+
+### It'S mEmE OClOcK
+This functionality was inspired by BeReal to make this customisable watch a bit more fun. It'S mEmE OClOcK uses the ESP32's built-in Real-Time-Clock (RTC) which is a small built in device that measures the passing of time. It also utilises the ability to show pictures on the watch screen. The desired images need to be transformed into C arrays to enable the ESP32 to interpret them. Each image has to be of dimension 240x240 pixels to fit into the screen of the watch. 
+
+Every day at 23:59:59, a set of time values get randomly assigned. Within the same day, when the RTC hits those values, a randomly chosen meme photo will appear on the screen with the lovely message "It'S mEmE OClOcK" on the screen. 
+
+### Watering your plants reminder
+This functionality was inspired by me procrastinating (and also forgetting) to water my plants every week. The reminder functionality also uses the ESP32's RTC to check if the current time is "watering time", which is set programmatically. Once the reminder pops up on the day, hour, minute chosen, it stays on the screen until the "Close" button underneath the reminder is clicked. 
+
+## Testing
+Testing of the project can be done in different ways for the different functionalities. 
+
+##### Testing of the screen timeout
+Once the watch is on the main screen, waiting for 60 seconds should result in the screen turning off. Touching the screen while the watch is on sleep should turn on the screen and the tester should be on the main screen.
+
+##### Testing of plant watering reminder
+The reminder to water plants come up on the main screen of the watch when the variables align with the current time. These variables that need to align are the _day_, _hour_, _minute_, and _second_. There are hardcoded values for these variables, however, changing the value of these variables to future time values closer to time of testing will allow successful testing of the functionality. 
+
+Once the reminder pops up on the screen, the button to close the reminder should appear under the reminder message. The reminder should stay on the screen until the "Close" button is pressed, in which case the reminder will disappear and the watch will return to the main screen.
+
+Note: The testing values put in should allow time for the program to upload to the hardware. For example, if the project is being tested on Thursday at 3:07:10pm, putting the values _4_, _15_, _9_, and _10_ for the variables _day_, _hour_, _minute_, and _second_ respectively should allow enough time for the firmware to be burnt into the hardware to allow the tester to see the functionality in the next couple of seconds. It will also allow to reduce the error margin of the time values of the watch compared to real time clock values. 
+
+##### Testing of It'S mEmE OClOcK 
+Similar to the plant watering reminder, the meme picture and the " It'S mEmE OClOcK" message come up on the watch screen when the variables align with the current time. These variables can be changed to future time values that are close to the time of testing to check the functionality. The meme picutre and the message should disappear from the screen after 10 seconds and the watch should return back to the main screen. 
+
+## Review of the project
+This project uses the RTC functionality of the TTGO T-Watch hardware. RTC keeps system time independent of the main processor ([docs.espressif.com](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system_time.html)) allowing it to execute programs that depend on real-time clocks, timers etc. 
+
+While implementing the project, it took me a while to understand what I could do with the hardware features as well as the example programs given. While exploring these possibilities, I realised that some of these examples were not working on the watch model I had or they worked by implementing certain aspects in different ways. This meant a lot of modifying and trying different pieces of code on the hardware. One of the biggest challenges I faced while doing this project was deciding where to start and what to include in the implementations since every possible functionality had few different ways that could be implemented. I decided to start on a blank code canvas and add code bits I needed from the examples and various other sources. Since this meant putting pieces from different programs and adding my own twist to it, I research every method used in these pieces to then be able to solve errors I was getting when combining those pieces. Even though this took quite some time, towards the end, I was able to speculate what kind of methods I should be using for a task I had in mind or solve an error that appeared.
+
+One of the conclusions I came to at the end of this project was that the documentation of every possible functionality of the watch was not available. Even though this piece of hardware is possibly more documented than other pieces, it was quite hard to find documentation for specific actions/features/functions for the watch. I could even say that by the end, I had exhausted almost all of the websites and videos available for TTGO T-Watch documentation (haha!) but still had to look at low-level code files to figure out what was going on. TTGO T-Watch definitely has some amazing features that could be manipulated, however, especially as a person who has started working with hardware for the first time in their life, it takes some time to understand the hardware itself as well as the firmware that creates wonders (and also possibly because stuff go wrong and you have no idea why so you spend ages being clueless until a lightbulb appears). 
+
+Due to this, I implemented a simpler version of what I originally had in mind since I came across more errors and problems that took most of my time to solve. Therefore, the functionalities have some limitations here and there. One of the limitations is that the plant watering reminder and the "It'S mEmE OClOcK" functionalities do not work when the watch is off (meaning, when the screen on the watch is off and the watch is sleeping). I have searched and tried a lot of ways to programatically wake up the watch from sleep when it is time for these functionalities to run, however, I was unsuccessful due to learning that it is not possible to write to the pins responsible for the screen to wakeup besides pre-defined methods, like touching the screen or pressing the button. This problem could be solved by using the pre-defined method of waking up the watch at a wanted time using a timer. A specific timer value could be calculated from current time to the time when the functionalities are going to be executed. 
+
+
+## More documentation
+This project heavily uses the supplied examples from the TTGO T-Watch library. The main example files that were used are `BasicUnit > WakeupFormTouchScreen` and `LVGL > BatmanDial`. 
+
+- `WEEKLY_EVENT_DAY` variable should have a value between 0-6 with 0 corresponding to Sunday and 6 to Saturday.
+- Time variables do not recognise AM or PM. You must use a 24 hour scale where 0 is midnight and 23 is 11pm.
+
+- Wakeup from sleep function of the watch can be changed to set the watch to wake up from a screen touch. Currently it is set to button press. Simply uncomment the code that enables screen touch and comment the code that enables button press.
+- The watch can be set to go to sleep on a timeout. Currently, the watch does not go to sleep unless the button is pressed. Simply uncomment the timeout code and change the variable `DEFAULT_SCREEN_TIMEOUT` if you want a different timeout value. 
+
+## Running the project
+To upload the program to your TTGO T-Watch V3 using Arduino IDE, simply open the `ProjectThing.ino` file and click on the arrow on the top left corner of the IDE. Alternatively, you can upload the program via `Sketch > Upload`. 
+
+Watch the demo video [here](https://gitlab.com/aiokan1/com3505-student-2023/-/blob/main/LA2/watch-demo.MOV). 
+
+## Troubleshooting
+Make sure you have the watch turned on before uploading your program, otherwise you will get an error while uploading. 
+Sometimes the RTC stays behind of the actual time. Reburning the code to the watch seems to help with this. 
+
